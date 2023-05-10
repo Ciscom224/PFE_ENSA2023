@@ -18,11 +18,7 @@ class DoctorController extends Controller
     {
         //
 
-        $doctors = DB::table('users')->where('role',"=","Doctor")
-            ->join('specialities', 'users.speciality_id', '=', 'specialities.speciality_id')
-            ->select('users.id','users.first_name','users.last_name' ,'users.email','specialities.name')
-            ->orderByDesc('users.id')
-            ->get();
+        $doctors = DB::table('users')->where('role',"=","Doctor")->get();
 
         return response()->json([
             'doctors'=>$doctors,
@@ -47,21 +43,16 @@ class DoctorController extends Controller
         $request->validate([
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
-            'speciality' => ['required'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required',  Password::min(8)],
         ]);
-         //add doctor spectility
-         $id = DB::table('specialities')->insertGetId(
-            ['name' => $request->speciality]
-        );
+
         $user = new User;
         $user->first_name = $request->first_name;
         $user->last_name = $request->last_name;
         $user->adress = "default";
         $user->email = $request->email;
         $user->role = "Doctor";
-        $user->speciality_id = $id;
         $user->password = Hash::make($request->password);
         $user->save();
 

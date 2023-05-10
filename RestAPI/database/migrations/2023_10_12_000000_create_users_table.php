@@ -19,12 +19,13 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('password');
             $table->string('role');
-            $table->unsignedBigInteger('speciality_id')->nullable();
             $table->boolean('online')->default(false);
+            $table->unsignedBigInteger('speciality_id')->nullable();
+            $table->foreign('speciality_id')->references('speciality_id')->on('specialities');
+            $table->unsignedBigInteger('nb_of_patient')->default(0);
+
             $table->rememberToken();
 
-
-            $table->foreign('speciality_id')->references('speciality_id')->on('specialities');
         });
     }
 

@@ -26,12 +26,22 @@ Route::group(['middleware' => ["auth:sanctum"]], function () {
 
 
       //====================================================================//
-     //                      SERVICES ROUTES                               //
+     //                      ADMIN ROUTES                                  //
     //====================================================================//
 
     Route::post('/addService', [AdminController::class, 'addService']);
     Route::get('/services', [AdminController::class, 'getAllService']);
 
+
+    Route::post('/addSpeciality', [AdminController::class, 'addSpeciality']);
+    Route::get('/specialities', [AdminController::class, 'getAllSpeciality']);
+    Route::get('/speciality/{id}', [AdminController::class, 'getSpeciality']);
+    Route::delete('/speciality/{id}', [AdminController::class, 'delSpeciality']);
+
+    Route::post('/doctor_to_speciality', [AdminController::class, 'doctorToSpeciality']);
+    Route::get('/doctors_speciality/{id}', [AdminController::class, 'doctorsSpeciality']);
+
+    Route::post('/doctor_to_patient', [AdminController::class, 'doctorToPatient']);
 
       //====================================================================//
      //                      DOCTOR ROUTES                                 //
@@ -46,7 +56,7 @@ Route::group(['middleware' => ["auth:sanctum"]], function () {
      //                     PATIENT ROUTES                                 //
     //====================================================================//
     Route::post('/addPatient', [PatientController::class, 'store']);
-    Route::get('/getPatient/{id}', [PatientController::class, 'show']);
+    Route::post('/getPatient', [PatientController::class, 'show']);
     Route::get('/allPatient', [PatientController::class, 'index']);
     Route::post('/updatePatient/{id}', [PatientController::class, 'update']);
     Route::delete('/delPatient/{id}', [PatientController::class, 'destroy']);

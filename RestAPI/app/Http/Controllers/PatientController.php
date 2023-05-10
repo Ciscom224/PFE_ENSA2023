@@ -29,11 +29,27 @@ class PatientController extends Controller
     public function store(Request $request)
     {
         //
+
+        // if ($request->hasFile('image')) {
+        //     $file=$request->file('profil_image');
+        //     $fileName=$file->getClientOriginalName();
+        //     $finalName=$request->patient_id . $request->first_name;
+
+        //     $request->file('profil_image')->storeAs('patients/',$finalName,'public');
+        //     $msg="Bien";
+        // }
+        // else $msg="non.....";
+
+
+
+
         $patient=new Patient;
-        $patient->patient_id=$request->patient_id;
+        $patient->patient_id=htmlspecialchars($request->ID);
         $patient->first_name=$request->first_name;
         $patient->middle_name=$request->middle_name;
         $patient->last_name=$request->last_name;
+        $patient->email=$request->email;
+        $patient->regDate=$request->regDate;
         $patient->birth_day=$request->birth_day;
         $patient->adress=$request->adress;
         $patient->city=$request->city;
@@ -41,11 +57,12 @@ class PatientController extends Controller
         $patient->phone_2=$request->phone_2;
         $patient->gender=$request->gender;
         $patient->blood_group=$request->blood_group;
+        $patient->profil_image='default';
         $patient->is_allergy=$request->is_allergy;
         $patient->is_chronic=$request->is_chronic;
         $patient->save();
         return response()->json([
-            'status'=>1
+            'status'=>1,
         ]);
 
     }
@@ -53,14 +70,92 @@ class PatientController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Request $request)
     {
         //
-        $patient=DB::table('patients')->where('patient_id','=',$id)->get();
-        return response()->json([
-            'patient'=>$patient,
-            'status'=>1
-        ]);
+        if(empty($request->patient_id) & empty($request->first_name) & empty($request->middle_name) &empty($request->last_name) ){
+            return response()->json([
+                'msg'=>"All is null",
+                'patients'=>Patient::all(),
+               
+            ]);
+        }
+        elseif (!empty($request->patient_id)) {
+            $patients=DB::table('patients')->where('patient_id','=',$request->patient_id)->get();
+            if (count($patients)==0) {
+                return response()->json([
+                    'msg'=>'No Patient ID : ',
+                    'patients'=>$patients,
+                    'status'=>0
+    
+                ]);
+            } else {
+                return response()->json([
+                    'msg'=>'first ID is not null',
+                    'patients'=>$patients,
+    
+                ]);
+            }
+        } elseif(!empty($request->first_name)) {
+            $patients=DB::table('patients')->where('first_name','LIKE',$request->first_name)->get();
+
+            if (count($patients)==0) {
+                return response()->json([
+                    'msg'=>'No Patient ',
+                    'status'=>0
+    
+                ]);
+            } else {
+                return response()->json([
+                    'msg'=>'first ID is not null',
+                    'patients'=>$patients,
+    
+                ]);
+            }
+            
+         
+        }
+      
+        elseif(!empty($request->last_name)) {
+            $patients=DB::table('patients')->where('last_name','LIKE',$request->last_name)->get();
+
+              if (count($patients)==0) {
+                return response()->json([
+                    'msg'=>'No Patient Last Name',
+                    'status'=>0
+    
+                ]);
+            } else {
+                return response()->json([
+                    'msg'=>'Last Name is not null',
+                    'patients'=>$patients,
+    
+                ]);
+            }
+        }
+        elseif(!empty($request->middle_name)) {
+            $patients=DB::table('patients')->where('middle_name','LIKE',$request->middle_name)->get();
+
+           
+              if (count($patients)==0) {
+                return response()->json([
+                    'msg'=>'No Patient Middle Name',
+                    'status'=>0
+    
+                ]);
+            } else {
+                return response()->json([
+                    'msg'=>'Middle Name is not null',
+                    'patients'=>$patients,
+    
+                ]);
+            }
+        }
+        else
+            return response()->json([
+                'patient'=>"rien a dire"
+            ]);
+
 
     }
 
