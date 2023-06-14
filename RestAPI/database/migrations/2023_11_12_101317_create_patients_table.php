@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('patients', function (Blueprint $table) {
             $table->string("patient_id")->unique();
-            $table->string("email",100);
+            // $table->string("email",100);
             $table->string("first_name",100);
             $table->string("middle_name",100)->nullable();
             $table->string("last_name",100);
@@ -29,6 +29,8 @@ return new class extends Migration
             $table->string('is_chronic');
             $table->string('is_allergy');
             $table->timestamps();
+            $table->unsignedBigInteger('doctor_id')->nullable();
+            $table->foreign('doctor_id')->references('id')->on('users');
         });
     }
 

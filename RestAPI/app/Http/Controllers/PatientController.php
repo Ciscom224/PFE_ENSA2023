@@ -48,7 +48,6 @@ class PatientController extends Controller
         $patient->first_name=$request->first_name;
         $patient->middle_name=$request->middle_name;
         $patient->last_name=$request->last_name;
-        $patient->email=$request->email;
         $patient->regDate=$request->regDate;
         $patient->birth_day=$request->birth_day;
         $patient->adress=$request->adress;
@@ -76,24 +75,27 @@ class PatientController extends Controller
         if(empty($request->patient_id) & empty($request->first_name) & empty($request->middle_name) &empty($request->last_name) ){
             return response()->json([
                 'msg'=>"All is null",
-                'patients'=>Patient::all(),
-               
+                'patients'=>DB::table('patients')->where('doctor_id',"=",NULL)->get(),
+
             ]);
         }
         elseif (!empty($request->patient_id)) {
-            $patients=DB::table('patients')->where('patient_id','=',$request->patient_id)->get();
+            $patients=DB::table('patients')
+                                        ->where('patient_id','=',$request->patient_id)
+                                        ->where('doctor_id',"=",NULL)
+                                        ->get();
             if (count($patients)==0) {
                 return response()->json([
                     'msg'=>'No Patient ID : ',
                     'patients'=>$patients,
                     'status'=>0
-    
+
                 ]);
             } else {
                 return response()->json([
                     'msg'=>'first ID is not null',
                     'patients'=>$patients,
-    
+
                 ]);
             }
         } elseif(!empty($request->first_name)) {
@@ -103,19 +105,19 @@ class PatientController extends Controller
                 return response()->json([
                     'msg'=>'No Patient ',
                     'status'=>0
-    
+
                 ]);
             } else {
                 return response()->json([
                     'msg'=>'first ID is not null',
                     'patients'=>$patients,
-    
+
                 ]);
             }
-            
-         
+
+
         }
-      
+
         elseif(!empty($request->last_name)) {
             $patients=DB::table('patients')->where('last_name','LIKE',$request->last_name)->get();
 
@@ -123,31 +125,31 @@ class PatientController extends Controller
                 return response()->json([
                     'msg'=>'No Patient Last Name',
                     'status'=>0
-    
+
                 ]);
             } else {
                 return response()->json([
                     'msg'=>'Last Name is not null',
                     'patients'=>$patients,
-    
+
                 ]);
             }
         }
         elseif(!empty($request->middle_name)) {
             $patients=DB::table('patients')->where('middle_name','LIKE',$request->middle_name)->get();
 
-           
+
               if (count($patients)==0) {
                 return response()->json([
                     'msg'=>'No Patient Middle Name',
                     'status'=>0
-    
+
                 ]);
             } else {
                 return response()->json([
                     'msg'=>'Middle Name is not null',
                     'patients'=>$patients,
-    
+
                 ]);
             }
         }
@@ -183,6 +185,13 @@ class PatientController extends Controller
         return response()->json([
             'message'=>"Update patient success ...",
             'status'=>1,
+        ]);
+    }
+
+    public function getPatient(string $id){
+        $data=DB::table('patients')->where('patient_id','LIKE',$id)->first();
+        return response()->json([
+            'patient'=>$data
         ]);
     }
 

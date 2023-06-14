@@ -19,11 +19,16 @@ class DoctorController extends Controller
         //
 
         $doctors = DB::table('users')->where('role',"=","Doctor")->get();
-
-        return response()->json([
-            'doctors'=>$doctors,
-        ]);
-    }
+        if(empty($doctors)){
+            return response()->json([
+                'doctors'=>[]
+            ]);
+        }
+        else
+            return response()->json([
+                'doctors'=>$doctors,
+            ]);
+        }
 
     /**
      * Show the form for creating a new resource.
@@ -48,8 +53,8 @@ class DoctorController extends Controller
         ]);
 
         $user = new User;
-        $user->first_name = $request->first_name;
-        $user->last_name = $request->last_name;
+        $user->user_first_name = $request->first_name;
+        $user->user_last_name = strtoupper($request->last_name);
         $user->adress = "default";
         $user->email = $request->email;
         $user->role = "Doctor";
@@ -91,6 +96,38 @@ class DoctorController extends Controller
         //
     }
 
+
+    public function doctor_patient(string $name){
+
+        if (strcmp($name,"All")!=0)
+        {
+            $doctor_id=explode("_",$name);
+            $id=(int)$doctor_id[1];
+
+            $patients=DB::table('patients')
+            ->join('users', 'users.id', '=', 'patients.doctor_id')
+            ->where('patients.doctor_id','=',$id)
+            ->select('users.user_last_name','users.user_first_name','patients.patient_id','patients.first_name', 'patients.birth_day', 'patients.last_name',)
+            ->get();
+
+
+            return response()->json([
+                'patients'=>$patients
+            ]);
+        }
+        else{
+            $patients=DB::table('patients')
+            ->join('users', 'users.id', '=', 'patients.doctor_id')
+            ->select('patients.patient_id','patients.first_name', 'patients.last_name', 'patients.birth_day','users.*',)
+            ->get();
+
+            return response()->json([
+                'msg'=>$name,
+                'patients'=>$patients
+            ]);
+        }
+
+    }
     /**
      * Remove the specified resource from storage.
      */

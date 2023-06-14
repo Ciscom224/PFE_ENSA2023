@@ -6,8 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Validator;
-use Dotenv\Exception\ValidationException;
+
 use Illuminate\Validation\ValidationException as ValidationValidationException;
 
 
@@ -29,23 +28,13 @@ class LoginController extends Controller
         ]);
 
         $user = new User;
-        $user->first_name = $request->first_name;
-        $user->last_name = $request->last_name;
+        $user->user_first_name = $request->first_name;
+        $user->user_last_name = $request->last_name;
         $user->adress = $request->adress;
         $user->email = $request->email;
         $user->role = $request->role;
         $user->password = Hash::make($request->password);
-
-
         $user->save();
-        // User::create([
-        //     'first_name' => $request->first_name,
-        //     'last_name' => $request->last_name,
-        //     'adress' => $request->adress,
-        //     'email' => $request->email,
-        //     'password' => Hash::make($request->password),
-        // ]);
-
 
         return response()->json([
             "message"=>"Utilisateur bien recu"

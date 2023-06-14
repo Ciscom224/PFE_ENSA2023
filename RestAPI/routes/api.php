@@ -49,6 +49,7 @@ Route::group(['middleware' => ["auth:sanctum"]], function () {
     Route::post('/addDoctor', [DoctorController::class, 'store']);
     Route::get('/doctors', [DoctorController::class, 'index']);
     Route::get('/doctor/{id}', [DoctorController::class, 'show']);
+    Route::get('/doctor_patient/{name}', [DoctorController::class, 'doctor_patient']);
     Route::delete('/doctor/{id}', [DoctorController::class, 'destroy']);
 
 
@@ -56,7 +57,8 @@ Route::group(['middleware' => ["auth:sanctum"]], function () {
      //                     PATIENT ROUTES                                 //
     //====================================================================//
     Route::post('/addPatient', [PatientController::class, 'store']);
-    Route::post('/getPatient', [PatientController::class, 'show']);
+    Route::get('/get_patient/{id}', [PatientController::class, 'getPatient']);
+    Route::post('/search_patient', [PatientController::class, 'show']);
     Route::get('/allPatient', [PatientController::class, 'index']);
     Route::post('/updatePatient/{id}', [PatientController::class, 'update']);
     Route::delete('/delPatient/{id}', [PatientController::class, 'destroy']);

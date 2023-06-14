@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('first_name');
-            $table->string('last_name');
+            $table->string('user_first_name');
+            $table->string('user_last_name');
             $table->string('adress',200);
             $table->string('email')->unique();
             $table->string('password');
@@ -22,7 +22,7 @@ return new class extends Migration
             $table->boolean('online')->default(false);
             $table->unsignedBigInteger('speciality_id')->nullable();
             $table->foreign('speciality_id')->references('speciality_id')->on('specialities');
-            $table->unsignedBigInteger('nb_of_patient')->default(0);
+
 
             $table->rememberToken();
 
