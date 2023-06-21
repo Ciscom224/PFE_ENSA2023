@@ -59,10 +59,10 @@ class LoginController extends Controller
                 ]);
 
         }
-        return $resquest->user();
-        // return response()->json([
-        //     'user'=>$resquest->user()
-        // ]);
+        // return $resquest->user();
+        return response()->json([
+            'user'=>$resquest->user()
+        ]);
 
     }
 
