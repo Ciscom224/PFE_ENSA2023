@@ -18,17 +18,16 @@ class DoctorController extends Controller
     {
         //
 
-        $doctors = DB::table('users')->where('role',"=","Doctor")->get();
-        if(empty($doctors)){
+        $doctors = DB::table('users')->where('role', "=", "Doctor")->get();
+        if (empty($doctors)) {
             return response()->json([
-                'doctors'=>[]
+                'doctors' => []
             ]);
-        }
-        else
+        } else
             return response()->json([
-                'doctors'=>$doctors,
+                'doctors' => $doctors,
             ]);
-        }
+    }
 
     /**
      * Show the form for creating a new resource.
@@ -48,7 +47,7 @@ class DoctorController extends Controller
         $request->validate([
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:'.User::class],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:' . User::class],
             'password' => ['required',  Password::min(8)],
         ]);
 
@@ -62,8 +61,8 @@ class DoctorController extends Controller
         $user->save();
 
         return response()->json([
-            'status'=>1,
-            'msg'=>"Add Doctor sucess !!!",
+            'status' => 1,
+            'msg' => "Add Doctor sucess !!!",
 
         ]);
     }
@@ -74,9 +73,9 @@ class DoctorController extends Controller
     public function show(string $id)
     {
         //
-        $doctor=User::find($id);
+        $doctor = User::find($id);
         return response()->json([
-            'doctor'=>$doctor
+            'doctor' => $doctor
         ]);
     }
 
@@ -97,36 +96,47 @@ class DoctorController extends Controller
     }
 
 
-    public function doctor_patient(string $name){
+    public function doctor_patient(string $name)
+    {
 
-        if (strcmp($name,"All")!=0)
-        {
-            $doctor_id=explode("_",$name);
-            $id=(int)$doctor_id[1];
+        if (strcmp($name, "All") != 0) {
+            $doctor_id = explode("_", $name);
+            $id = (int)$doctor_id[1];
 
-            $patients=DB::table('patients')
-            ->join('users', 'users.id', '=', 'patients.doctor_id')
-            ->where('patients.doctor_id','=',$id)
-            ->select('users.user_last_name','users.user_first_name','patients.patient_id','patients.first_name', 'patients.birth_day', 'patients.last_name',)
-            ->get();
+            $patients = DB::table('patients')
+                ->join('users', 'users.id', '=', 'patients.doctor_id')
+                ->where('patients.doctor_id', '=', $id)
+                ->select('users.user_last_name', 'users.user_first_name', 'patients.patient_id', 'patients.first_name', 'patients.birth_day', 'patients.last_name',)
+                ->get();
 
-
-            return response()->json([
-                'patients'=>$patients
-            ]);
-        }
-        else{
-            $patients=DB::table('patients')
-            ->join('users', 'users.id', '=', 'patients.doctor_id')
-            ->select('patients.patient_id','patients.first_name', 'patients.last_name', 'patients.birth_day','users.*',)
-            ->get();
 
             return response()->json([
-                'msg'=>$name,
-                'patients'=>$patients
+                'patients' => $patients
+            ]);
+        } else {
+            $patients = DB::table('patients')
+                ->join('users', 'users.id', '=', 'patients.doctor_id')
+                ->select('patients.patient_id', 'patients.first_name', 'patients.last_name', 'patients.birth_day', 'users.*',)
+                ->get();
+
+            return response()->json([
+                'msg' => $name,
+                'patients' => $patients
             ]);
         }
+    }
 
+    public function patients_for_this_doctor(int $doctor_id)
+    {
+        $patients = DB::table('patients')
+            ->join('users', 'users.id', '=', 'patients.doctor_id')
+            ->where('patients.doctor_id', '=', $doctor_id)
+            ->select('patients.*')
+            ->get();
+
+        return response()->json([
+            'patients'=>$patients
+        ]);
     }
     /**
      * Remove the specified resource from storage.
@@ -136,8 +146,7 @@ class DoctorController extends Controller
         //
         User::destroy($id);
         return response()->json([
-            'message'=>"doctor delete success..."
+            'message' => "doctor delete success..."
         ]);
-
     }
 }

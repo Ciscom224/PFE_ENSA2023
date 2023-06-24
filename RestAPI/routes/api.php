@@ -2,7 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
- 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\DoctorController;
 use App\Http\Controllers\Auth\UserController;
 use App\Http\Controllers\PatientController;
@@ -50,6 +50,8 @@ Route::group(['middleware' => ["auth:sanctum"]], function () {
     Route::get('/doctors', [DoctorController::class, 'index']);
     Route::get('/doctor/{id}', [DoctorController::class, 'show']);
     Route::get('/doctor_patient/{name}', [DoctorController::class, 'doctor_patient']);
+    Route::get('/patient_for_doctor/{id}', [DoctorController::class, 'patients_for_this_doctor']);
+
     Route::delete('/doctor/{id}', [DoctorController::class, 'destroy']);
 
 
