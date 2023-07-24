@@ -44,7 +44,7 @@ class PatientController extends Controller
 
 
         $patient=new Patient;
-        $patient->patient_id=htmlspecialchars($request->ID);
+        $patient->id=htmlspecialchars($request->ID);
         $patient->first_name=$request->first_name;
         $patient->middle_name=$request->middle_name;
         $patient->last_name=$request->last_name;
@@ -57,8 +57,6 @@ class PatientController extends Controller
         $patient->gender=$request->gender;
         $patient->blood_group=$request->blood_group;
         $patient->profil_image='default';
-        $patient->is_allergy=$request->is_allergy;
-        $patient->is_chronic=$request->is_chronic;
         $patient->save();
         return response()->json([
             'status'=>1,

@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('patients', function (Blueprint $table) {
-            $table->string("patient_id")->unique();
+            $table->string("id")->unique();
             // $table->string("email",100);
             $table->string("first_name",100);
             $table->string("middle_name",100)->nullable();
@@ -26,11 +26,11 @@ return new class extends Migration
             $table->bigInteger("phone_2");
             $table->string('gender',15);
             $table->string('blood_group',5);
-            $table->string('is_chronic');
-            $table->string('is_allergy');
+            $table->softDeletes();
             $table->timestamps();
             $table->unsignedBigInteger('doctor_id')->nullable();
             $table->foreign('doctor_id')->references('id')->on('users');
+            $table->index('id');
         });
     }
 

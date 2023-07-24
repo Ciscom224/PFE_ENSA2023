@@ -3,11 +3,11 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\DoctorController;
 use App\Http\Controllers\Auth\UserController;
 use App\Http\Controllers\PatientController;
-
-
+use App\Models\Appointment;
 
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user();
@@ -65,4 +65,15 @@ Route::group(['middleware' => ["auth:sanctum"]], function () {
     Route::post('/updatePatient/{id}', [PatientController::class, 'update']);
     Route::delete('/delPatient/{id}', [PatientController::class, 'destroy']);
 
+      //====================================================================//
+     //                     APPOINTMENT ROUTES                             //
+    //====================================================================//
+    Route::post('/addAppointment', [AppointmentController::class, 'store']);
+    Route::get('/get_appointment/{id}', [AppointmentController::class, 'getPatient']);
+    Route::post('/search_appointment', [AppointmentController::class, 'show']);
+    Route::get('/allappointment', [AppointmentController::class, 'index']);
+    Route::get('/patientAppointment/{patient_id}', [AppointmentController::class, 'patientAppointment']);
+    Route::post('/updateappointment', [AppointmentController::class, 'update']);
+    Route::post('/editappointment', [AppointmentController::class, 'edit']);
+    Route::delete('/delappointment/{id}', [AppointmentController::class, 'destroy']);
 });
