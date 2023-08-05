@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
+
 use App\Models\Patient;
+use Barryvdh\DomPDF\PDF;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 
 class PatientController extends Controller
 {
@@ -14,10 +18,10 @@ class PatientController extends Controller
     public function index()
     {
         //
-        $patients=Patient::all();
+        $patients = Patient::all();
         return response()->json([
-            'patients'=>$patients,
-            'status'=>1
+            'patients' => $patients,
+            'status' => 1
         ]);
     }
 
@@ -26,137 +30,69 @@ class PatientController extends Controller
     /**
      * Store a newly created resource in storage.
      */
+
     public function store(Request $request)
     {
-        //
-
-        // if ($request->hasFile('image')) {
-        //     $file=$request->file('profil_image');
-        //     $fileName=$file->getClientOriginalName();
-        //     $finalName=$request->patient_id . $request->first_name;
-
-        //     $request->file('profil_image')->storeAs('patients/',$finalName,'public');
-        //     $msg="Bien";
-        // }
-        // else $msg="non.....";
-
-
-
-
-        $patient=new Patient;
-        $patient->id=htmlspecialchars($request->ID);
-        $patient->first_name=$request->first_name;
-        $patient->middle_name=$request->middle_name;
-        $patient->last_name=$request->last_name;
-        $patient->regDate=$request->regDate;
-        $patient->birth_day=$request->birth_day;
-        $patient->adress=$request->adress;
-        $patient->city=$request->city;
-        $patient->phone_1=$request->phone_1;
-        $patient->phone_2=$request->phone_2;
-        $patient->gender=$request->gender;
-        $patient->blood_group=$request->blood_group;
-        $patient->profil_image='default';
-        $patient->save();
-        return response()->json([
-            'status'=>1,
+        $validation = $request->validate([
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
+            'birth_day' => ['required', 'date', 'max:255'],
+            'address' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:' . Patient::class],
         ]);
 
+        if ($validation) {
+            $patient = new Patient;
+            $patient->id = htmlspecialchars($request->ID);
+            $patient->email = htmlspecialchars($request->email);
+            $patient->first_name = htmlspecialchars($request->first_name);
+            $patient->last_name = htmlspecialchars($request->last_name);
+            $patient->regDate = Carbon::now();
+            $patient->birth_day = htmlspecialchars($request->birth_day);
+            $patient->adress = htmlspecialchars($request->address);
+            $patient->city = htmlspecialchars($request->city);
+            $patient->phone = htmlspecialchars($request->phone);
+            $patient->gender = htmlspecialchars($request->gender);
+            $patient->blood_group = htmlspecialchars($request->blood_group);
+            $patient->allergies = htmlspecialchars(implode(',', $request->allergies));
+            $patient->profil_image = 'default';
+            $patient->save();
+
+            return response()->json([
+                'status' => 1,
+                'message' => "Patient ajoute !!!"
+            ]);
+        } else {
+            return response()->json([
+                'status' => 0,
+            ]);
+        }
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Request $request)
+    public function show($search)
     {
-        //
-        if(empty($request->patient_id) & empty($request->first_name) & empty($request->middle_name) &empty($request->last_name) ){
-            return response()->json([
-                'msg'=>"All is null",
-                'patients'=>DB::table('patients')->where('doctor_id',"=",NULL)->get(),
 
-            ]);
-        }
-        elseif (!empty($request->patient_id)) {
-            $patients=DB::table('patients')
-                                        ->where('patient_id','=',$request->patient_id)
-                                        ->where('doctor_id',"=",NULL)
-                                        ->get();
-            if (count($patients)==0) {
-                return response()->json([
-                    'msg'=>'No Patient ID : ',
-                    'patients'=>$patients,
-                    'status'=>0
+        $search = $search == "none" ? "" : $search;
 
-                ]);
-            } else {
-                return response()->json([
-                    'msg'=>'first ID is not null',
-                    'patients'=>$patients,
-
-                ]);
-            }
-        } elseif(!empty($request->first_name)) {
-            $patients=DB::table('patients')->where('first_name','LIKE',$request->first_name)->get();
-
-            if (count($patients)==0) {
-                return response()->json([
-                    'msg'=>'No Patient ',
-                    'status'=>0
-
-                ]);
-            } else {
-                return response()->json([
-                    'msg'=>'first ID is not null',
-                    'patients'=>$patients,
-
-                ]);
-            }
-
-
-        }
-
-        elseif(!empty($request->last_name)) {
-            $patients=DB::table('patients')->where('last_name','LIKE',$request->last_name)->get();
-
-              if (count($patients)==0) {
-                return response()->json([
-                    'msg'=>'No Patient Last Name',
-                    'status'=>0
-
-                ]);
-            } else {
-                return response()->json([
-                    'msg'=>'Last Name is not null',
-                    'patients'=>$patients,
-
-                ]);
-            }
-        }
-        elseif(!empty($request->middle_name)) {
-            $patients=DB::table('patients')->where('middle_name','LIKE',$request->middle_name)->get();
-
-
-              if (count($patients)==0) {
-                return response()->json([
-                    'msg'=>'No Patient Middle Name',
-                    'status'=>0
-
-                ]);
-            } else {
-                return response()->json([
-                    'msg'=>'Middle Name is not null',
-                    'patients'=>$patients,
-
-                ]);
-            }
-        }
-        else
-            return response()->json([
-                'patient'=>"rien a dire"
-            ]);
-
-
+        $patients = Patient::when(!empty($search), function ($query) use ($search) {
+            $query->where('id', 'LIKE', '%' . $search . '%')
+                ->orWhere('first_name', 'LIKE', '%' . $search . '%')
+                ->orWhere('last_name', 'LIKE', '%' . $search . '%')
+                ->orWhere('blood_group', 'LIKE', '%' . strtoupper($search) . '%')
+                ->orWhere('adress', 'LIKE', '%' . $search . '%')
+                ->orWhere('gender', 'LIKE', '%' .strtoupper( $search) . '%')
+                ->orWhere('city', 'LIKE', '%' . $search . '%');
+        })
+            ->select("id as patient_id", "email","first_name", "last_name", "phone", "gender", "blood_group", "birth_day", "adress","city")
+            ->get();
+        return response()->json([
+            "patients" => $patients,
+            "count"=>count($patients),
+            "message" => $search
+        ]);
     }
 
 
@@ -166,42 +102,53 @@ class PatientController extends Controller
     public function update(Request $request, string $id)
     {
         //
-        DB::table('patients')->where('patient_id','=',$id)->update([
-            'first_name'=>$request->first_name,
-            'middle_name'=>$request->middle_name,
-            'last_name'=>$request->last_name,
-            'birth_day'=>$request->birth_day,
-            'adress'=>$request->adress,
-            'city'=>$request->city,
-            'phone_1'=>$request->phone_1,
-            'phone_2'=>$request->phone_2,
-            'gender'=>$request->gender,
-            'blood_group'=>$request->blood_group,
-            'is_allergy'=>$request->is_allergy,
-            'is_chronic'=>$request->is_chronic,
-        ]);
+
+        $patient=Patient::findOrFail($id);
+        $patient->first_name=htmlspecialchars($request->first_name);
+        $patient->last_name=htmlspecialchars($request->last_name);
+        $patient->birth_day=htmlspecialchars($request->birth_day);
+        $patient->adress=htmlspecialchars($request->adress);
+        $patient->city=htmlspecialchars($request->city);
+        $patient->blood_group=htmlspecialchars($request->blood_group);
+        $patient->save();
+
         return response()->json([
-            'message'=>"Update patient success ...",
-            'status'=>1,
+            'message' => "Mise a jour du patient : ".$id." reussi...",
+            'status' => 1,
         ]);
     }
 
-    public function getPatient(string $id){
-        $data=DB::table('patients')->where('patient_id','LIKE',$id)->first();
+    public function getPatient(string $id)
+    {
+        $data = DB::table('patients')->where('patient_id', 'LIKE', $id)->first();
         return response()->json([
-            'patient'=>$data
+            'patient' => $data
         ]);
     }
+    public function saveQForm(Request $request)
+    {
+        return response()->json(["all" => $request->all()]);
+        $header = $request->input('header');
+        $content = $request->input('content');
 
+        // Generate PDF using puppeteer or other libraries
+        $pdf = PDF::loadView('pdf.qForm', ['header' => $header, 'content' => $content]);
+
+        // Save PDF to storage/app/public or other suitable location
+        $pdfPath = storage_path('app/public/documents/document.pdf');
+        File::put($pdfPath, $pdf->output());
+
+        return response()->json(['message' => 'PDF enregistré avec succès !'], 200);
+    }
     /**
      * Remove the specified resource from storage.
      */
     public function destroy(string $id)
     {
         //
-        DB::table('patients')->where('patient_id','=',$id)->delete();
+        Patient::where('id', $id)->delete();
         return response()->json([
-            'message'=>"Patient delete success..."
+            'message' => "Patient supprimé success..."
         ]);
     }
 }

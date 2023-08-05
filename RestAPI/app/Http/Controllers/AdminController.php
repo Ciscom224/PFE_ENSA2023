@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Doctor_patient;
-use App\Models\Doctor_spe;
+use App\Models\User;
 use App\Models\Service;
+use App\Models\Doctor_spe;
 use App\Models\Speciality;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use App\Models\Doctor_patient;
 
+use Illuminate\Support\Facades\DB;
 use function GuzzleHttp\Promise\all;
 
 class AdminController extends Controller
@@ -90,13 +91,7 @@ class AdminController extends Controller
     }
     public function doctorsSpeciality(string $id){
 
-        $doctors=DB::table('users')
-        ->join('specialities', 'users.speciality_id', '=', 'specialities.speciality_id')
-        ->select('users.user_first_name', 'users.user_last_name','specialities.name')
-        ->where('specialities.name','LIKE',$id)
-        ->get();
-
-
+        $doctors=User::where("speciality_id",$id)->get();
         return response()->json([
             'doctors'=>$doctors
         ]);
@@ -104,23 +99,11 @@ class AdminController extends Controller
 
     public function doctorToPatient(Request $request){
 
-        $doctor=explode(' ',$request->doctor);
-
-        $doctor_id=DB::table('users')
-        ->join('specialities', 'users.speciality_id', '=', 'specialities.speciality_id')
-        ->where('specialities.name','LIKE',$request->speciality)
-        ->where('users.user_first_name','LIKE',$doctor[1])
-        ->where('users.user_last_name','LIKE',$doctor[2])
-        ->select('users.id')
-        ->first();
-
-        DB::table('patients')
-        ->where('patient_id', $request->patient_id)
-        ->update(['doctor_id' => $doctor_id->id]);
-
+        return response()->json([
+            'all'=>$request->all()
+        ]);
 
         return response()->json([
-            'doct'=>$doctor_id->id,
             'status'=>1,
             'msg'=>"succes..."
 

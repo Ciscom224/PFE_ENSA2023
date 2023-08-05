@@ -13,17 +13,16 @@ return new class extends Migration
     {
         Schema::create('patients', function (Blueprint $table) {
             $table->string("id")->unique();
-            // $table->string("email",100);
+            $table->string("email",100);
             $table->string("first_name",100);
-            $table->string("middle_name",100)->nullable();
             $table->string("last_name",100);
             $table->date("regDate");
             $table->date("birth_day");
             $table->string("adress",100);
             $table->string("city",100);
             $table->string("profil_image",100);
-            $table->bigInteger("phone_1");
-            $table->bigInteger("phone_2");
+            $table->string("allergies")->nullable();
+            $table->bigInteger("phone");
             $table->string('gender',15);
             $table->string('blood_group',5);
             $table->softDeletes();

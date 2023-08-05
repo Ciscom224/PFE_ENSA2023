@@ -14,7 +14,7 @@ class Appointment extends Model
     protected $dateFormat = 'timestamp';
     protected $fillable = ['title','patient_id','code','decription','start','end','status'];
 
-    public function Patient()
+    public function patient()
     {
         return $this->belongsTo(Patient::class);
     }

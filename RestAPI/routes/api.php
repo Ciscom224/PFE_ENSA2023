@@ -37,10 +37,8 @@ Route::group(['middleware' => ["auth:sanctum"]], function () {
     Route::get('/specialities', [AdminController::class, 'getAllSpeciality']);
     Route::get('/speciality/{id}', [AdminController::class, 'getSpeciality']);
     Route::delete('/speciality/{id}', [AdminController::class, 'delSpeciality']);
-
     Route::post('/doctor_to_speciality', [AdminController::class, 'doctorToSpeciality']);
     Route::get('/doctors_speciality/{id}', [AdminController::class, 'doctorsSpeciality']);
-
     Route::post('/doctor_to_patient', [AdminController::class, 'doctorToPatient']);
 
       //====================================================================//
@@ -51,7 +49,6 @@ Route::group(['middleware' => ["auth:sanctum"]], function () {
     Route::get('/doctor/{id}', [DoctorController::class, 'show']);
     Route::get('/doctor_patient/{name}', [DoctorController::class, 'doctor_patient']);
     Route::get('/patient_for_doctor/{id}', [DoctorController::class, 'patients_for_this_doctor']);
-
     Route::delete('/doctor/{id}', [DoctorController::class, 'destroy']);
 
 
@@ -60,9 +57,10 @@ Route::group(['middleware' => ["auth:sanctum"]], function () {
     //====================================================================//
     Route::post('/addPatient', [PatientController::class, 'store']);
     Route::get('/get_patient/{id}', [PatientController::class, 'getPatient']);
-    Route::post('/search_patient', [PatientController::class, 'show']);
+    Route::get('/search_patient/{search}', [PatientController::class, 'show']);
     Route::get('/allPatient', [PatientController::class, 'index']);
     Route::post('/updatePatient/{id}', [PatientController::class, 'update']);
+    Route::post('/saveQuestioForm', [PatientController::class, 'saveQForm']);
     Route::delete('/delPatient/{id}', [PatientController::class, 'destroy']);
 
       //====================================================================//
@@ -70,10 +68,18 @@ Route::group(['middleware' => ["auth:sanctum"]], function () {
     //====================================================================//
     Route::post('/addAppointment', [AppointmentController::class, 'store']);
     Route::get('/get_appointment/{id}', [AppointmentController::class, 'getPatient']);
-    Route::post('/search_appointment', [AppointmentController::class, 'show']);
+    Route::post('/searchAppointment', [AppointmentController::class, 'search']);
     Route::get('/allappointment', [AppointmentController::class, 'index']);
-    Route::get('/patientAppointment/{patient_id}', [AppointmentController::class, 'patientAppointment']);
+    Route::get('/patientAppointment/{patient_id}/{status}', [AppointmentController::class, 'patientAppointment']);
     Route::post('/updateappointment', [AppointmentController::class, 'update']);
     Route::post('/editappointment', [AppointmentController::class, 'edit']);
     Route::delete('/delappointment/{id}', [AppointmentController::class, 'destroy']);
+    Route::get('/cancelappointment/{id}', [AppointmentController::class, 'cancelAppointment']);
+
+
+      //====================================================================//
+     //                     Stats ROUTES                                   //
+    //====================================================================//
+    Route::get('/doctorAppointmentStats', [DoctorController::class, 'doctorStats']);
+
 });

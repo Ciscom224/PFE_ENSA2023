@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Appointment;
+use App\Models\Patient;
 use App\Models\User;
 use App\Models\Speciality;
 use Illuminate\Http\Request;
@@ -131,7 +133,7 @@ class DoctorController extends Controller
         $patients = DB::table('patients')
             ->join('users', 'users.id', '=', 'patients.doctor_id')
             ->where('patients.doctor_id', '=', $doctor_id)
-            ->select('patients.*')
+            ->select('patients.id as patient_id','patients.first_name','patients.last_name','patients.regDate','patients.gender','patients.birth_day','patients.blood_group')
             ->get();
 
         return response()->json([
@@ -147,6 +149,29 @@ class DoctorController extends Controller
         User::destroy($id);
         return response()->json([
             'message' => "doctor delete success..."
+        ]);
+    }
+
+    public function doctorStats(){
+        $appointmentStat=Appointment::whereHas('patient',function($query){
+            return $query->where('doctor_id',auth()->user()->id);
+        })
+        ->select('status', DB::raw('COUNT(*) as count'))
+        ->groupBy('status')
+        ->get();
+
+        $appointmentStatMonth=Patient::where('doctor_id',auth()->user()->id)
+        ->select(DB::raw('MONTH(regDate) as month'), DB::raw('COUNT(*) as count'))
+        ->groupBy(DB::raw('MONTH(regDate)'))
+        ->get()
+        ->each(function ($item) {
+            $mois = $item->month;
+            $nomMois = \Carbon\Carbon::createFromFormat('!m', $mois)->locale('fr')->monthName;
+            $item->month = $nomMois;
+        });
+        return response()->json([
+            'patientMonth'=>$appointmentStatMonth,
+            'appointStat'=>$appointmentStat,
         ]);
     }
 }
