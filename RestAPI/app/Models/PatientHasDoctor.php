@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Patient;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class PatientHasDoctor extends Model
 {
@@ -12,4 +13,8 @@ class PatientHasDoctor extends Model
         'doctor_id',
         'patient_id',
     ];
+
+    public function patients(){
+        return $this->hasMany(Patient::class,"id");
+    }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Appointment;
 use App\Models\Patient;
+use App\Models\PatientHasDoctor;
 use App\Models\User;
 use App\Models\Speciality;
 use Illuminate\Http\Request;
@@ -20,15 +21,10 @@ class DoctorController extends Controller
     {
         //
 
-        $doctors = DB::table('users')->where('role', "=", "Doctor")->get();
-        if (empty($doctors)) {
-            return response()->json([
-                'doctors' => []
-            ]);
-        } else
-            return response()->json([
-                'doctors' => $doctors,
-            ]);
+        $doctors = User::where("role", "Doctor")->get();
+        return response()->json([
+            'doctors' => $doctors,
+        ]);
     }
 
     /**
@@ -108,7 +104,7 @@ class DoctorController extends Controller
             $patients = DB::table('patients')
                 ->join('users', 'users.id', '=', 'patients.doctor_id')
                 ->where('patients.doctor_id', '=', $id)
-                ->select('users.user_last_name', 'users.user_first_name', 'patients.patient_id', 'patients.first_name', 'patients.birth_day', 'patients.last_name',)
+                ->select('users.user_last_name', 'users.user_first_name', 'patients.id', 'patients.first_name', 'patients.birth_day', 'patients.last_name',)
                 ->get();
 
 
@@ -118,7 +114,7 @@ class DoctorController extends Controller
         } else {
             $patients = DB::table('patients')
                 ->join('users', 'users.id', '=', 'patients.doctor_id')
-                ->select('patients.patient_id', 'patients.first_name', 'patients.last_name', 'patients.birth_day', 'users.*',)
+                ->select('patients.id', 'patients.first_name', 'patients.last_name', 'patients.birth_day', 'users.*',)
                 ->get();
 
             return response()->json([
@@ -128,16 +124,20 @@ class DoctorController extends Controller
         }
     }
 
-    public function patients_for_this_doctor(int $doctor_id)
+    public function patients_for_this_doctor($doctor_id)
     {
-        $patients = DB::table('patients')
-            ->join('users', 'users.id', '=', 'patients.doctor_id')
-            ->where('patients.doctor_id', '=', $doctor_id)
-            ->select('patients.id as patient_id','patients.first_name','patients.last_name','patients.regDate','patients.gender','patients.birth_day','patients.blood_group')
-            ->get();
+        
+        $doctor_id==0?"":$doctor_id;
+        $patients = PatientHasDoctor::when(!empty($doctor_id),function($query) use($doctor_id){
+            return $query->where('patient_has_doctors.doctor_id', $doctor_id);
+        })
+        ->join('users', 'users.id', '=', 'patient_has_doctors.doctor_id')
+        ->join('patients', 'patients.id', '=', 'patient_has_doctors.patient_id')
+        ->select('users.user_first_name as Dfname','users.user_last_name as Dlname','patients.id as patient_id', 'patients.first_name', 'patients.last_name', 'patients.regDate', 'patients.gender', 'patients.birth_day', 'patients.blood_group')
+        ->get();
 
         return response()->json([
-            'patients'=>$patients
+            'patients' => $patients
         ]);
     }
     /**
@@ -152,26 +152,28 @@ class DoctorController extends Controller
         ]);
     }
 
-    public function doctorStats(){
-        $appointmentStat=Appointment::whereHas('patient',function($query){
-            return $query->where('doctor_id',auth()->user()->id);
-        })
-        ->select('status', DB::raw('COUNT(*) as count'))
-        ->groupBy('status')
-        ->get();
+    public function doctorStats()
+    {
+        $appointmentStat = Appointment::where('patient_has_doctors.doctor_id', auth()->user()->id)
+            ->join('patient_has_doctors', 'appointments.patient_id', '=', 'patient_has_doctors.patient_id')
+            ->select('appointments.status', DB::raw('COUNT(*) as count'))
+            ->groupBy('appointments.status')
+            ->get();
 
-        $appointmentStatMonth=Patient::where('doctor_id',auth()->user()->id)
-        ->select(DB::raw('MONTH(regDate) as month'), DB::raw('COUNT(*) as count'))
-        ->groupBy(DB::raw('MONTH(regDate)'))
-        ->get()
-        ->each(function ($item) {
-            $mois = $item->month;
-            $nomMois = \Carbon\Carbon::createFromFormat('!m', $mois)->locale('fr')->monthName;
-            $item->month = $nomMois;
-        });
+        $appointmentStatMonth = Patient::whereHAs('affections',function($query){
+            $query->where('patient_has_doctors.doctor_id', auth()->user()->id);
+        })
+            ->select(DB::raw('MONTH(patients.regDate) as month'), DB::raw('COUNT(*) as count'))
+            ->groupBy(DB::raw('MONTH(patients.regDate)'))
+            ->get()
+            ->each(function ($item) {
+                $mois = $item->month;
+                $nomMois = \Carbon\Carbon::createFromFormat('!m', $mois)->locale('fr')->monthName;
+                $item->month = $nomMois;
+            });
         return response()->json([
-            'patientMonth'=>$appointmentStatMonth,
-            'appointStat'=>$appointmentStat,
+            'patientMonth' => $appointmentStatMonth,
+            'appointStat' => $appointmentStat,
         ]);
     }
 }

@@ -30,13 +30,15 @@ Route::group(['middleware' => ["auth:sanctum"]], function () {
     //====================================================================//
 
     Route::post('/addService', [AdminController::class, 'addService']);
-    Route::get('/services', [AdminController::class, 'getAllService']);
+    Route::get('/services/{search}', [AdminController::class, 'getAllService']);
+    Route::get('/Service/changeStatus/{id}', [AdminController::class, 'changeStatus']);
+    Route::delete('/service/delete/{id}', [AdminController::class, 'destroyService']);
 
 
     Route::post('/addSpeciality', [AdminController::class, 'addSpeciality']);
     Route::get('/specialities', [AdminController::class, 'getAllSpeciality']);
     Route::get('/speciality/{id}', [AdminController::class, 'getSpeciality']);
-    Route::delete('/speciality/{id}', [AdminController::class, 'delSpeciality']);
+    Route::delete('/speciality/delete/{id}', [AdminController::class, 'delSpeciality']);
     Route::post('/doctor_to_speciality', [AdminController::class, 'doctorToSpeciality']);
     Route::get('/doctors_speciality/{id}', [AdminController::class, 'doctorsSpeciality']);
     Route::post('/doctor_to_patient', [AdminController::class, 'doctorToPatient']);
@@ -81,5 +83,7 @@ Route::group(['middleware' => ["auth:sanctum"]], function () {
      //                     Stats ROUTES                                   //
     //====================================================================//
     Route::get('/doctorAppointmentStats', [DoctorController::class, 'doctorStats']);
+    Route::get('/receptionPatientStats/{search}', [PatientController::class, 'patientStats']);
+    Route::get('/adminPatientStats/{search}', [AdminController::class, 'Stats']);
 
 });

@@ -18,9 +18,12 @@ class AppointmentController extends Controller
     {
         //
 
-        $appointments = Appointment::join('patients', 'appointments.patient_id', '=', 'patients.id')
-            ->where('patients.doctor_id',auth()->user()->id)
-            ->select('patients.id as patient_id', 'patients.first_name', 'patients.last_name', 'patients.regDate as enter_d', 'patients.phone_1 as tel', 'appointments.id as id', 'appointments.title', 'appointments.decription as description', 'appointments.start', 'appointments.id as id', 'appointments.title', 'appointments.decription as description', 'appointments.end', 'appointments.status as color')
+        $appointments = Patient::join('appointments', 'appointments.patient_id', '=', 'patients.id')
+            ->join('patient_has_doctors', function ($query) {
+                $query->where('patient_has_doctors.doctor_id', auth()->user()->id);
+            })
+            ->select('patients.id as patient_id', 'patients.first_name', 'patients.last_name', 'patients.regDate as enter_d', 'patients.phone as tel', 'appointments.id as id', 'appointments.title', 'appointments.decription as description', 'appointments.start',  'appointments.end', 'appointments.status as color')
+            ->distinct("patients.id")
             ->get();
         return response()->json([
             'appointments' => $appointments
@@ -39,31 +42,30 @@ class AppointmentController extends Controller
                     ->orWhere('first_name', 'LIKE', '%' . $request->searchString . '%')
                     ->orWhere('last_name', 'LIKE', '%' . $request->searchString . '%')
                     ->orWhere('blood_group', 'LIKE', '%' . strtoupper($request->searchString) . '%')
-                    ->orWhere('adress', 'LIKE', '%' . $request->searchString . '%')
-                    ->orWhere('middle_name', 'LIKE', '%' . $request->searchString . '%');
+                    ->orWhere('adress', 'LIKE', '%' . $request->searchString . '%');
             })
             ->when(!empty($request->searchDate), function ($query) use ($request) {
                 $query->where('regDate', '=', $request->searchDate);
             })
-            ->select('patients.id as patient_id','patients.first_name','patients.last_name','patients.regDate','patients.gender')
+            ->select('patients.id as patient_id', 'patients.first_name', 'patients.last_name', 'patients.regDate', 'patients.gender')
+
             ->get();
 
-            $appointments = Appointment::join('patients', 'appointments.patient_id', '=', 'patients.id')
+        $appointments = Appointment::join('patients', 'appointments.patient_id', '=', 'patients.id')
             ->where('patients.doctor_id', $request->doctor_id)
             ->when(!empty($request->searchString), function ($query) use ($request) {
                 $query->where('patients.id', 'LIKE', '%' . $request->searchString . '%')
                     ->orWhere('patients.first_name', 'LIKE', '%' . $request->searchString . '%')
                     ->orWhere('patients.last_name', 'LIKE', '%' . $request->searchString . '%')
                     ->orWhere('patients.blood_group', 'LIKE', '%' . strtoupper($request->searchString) . '%')
-                    ->orWhere('patients.adress', 'LIKE', '%' . $request->searchString . '%')
-                    ->orWhere('.patients.middle_name', 'LIKE', '%' . $request->searchString . '%');
+                    ->orWhere('patients.adress', 'LIKE', '%' . $request->searchString . '%');
             })
             ->when(!empty($request->searchDate), function ($query) use ($request) {
                 $query->where('patients.regDate', '=', $request->searchDate);
             })
-            ->select('patients.id as patient_id', 'patients.first_name', 'patients.last_name', 'patients.regDate as enter_d', 'patients.phone_1 as tel', 'appointments.id as id', 'appointments.title', 'appointments.decription as description', 'appointments.start', 'appointments.id as id', 'appointments.title', 'appointments.decription as description', 'appointments.end', 'appointments.status as color')
+            ->select('patients.id as patient_id', 'patients.first_name', 'patients.last_name', 'patients.regDate as enter_d', 'patients.phone as tel', 'appointments.id as id', 'appointments.title', 'appointments.decription as description', 'appointments.start', 'appointments.end', 'appointments.status as color')
             ->get();
-    //    dd($patients);
+        //    dd($patients);
         return response()->json([
             'patients' => $patients,
             'appoitments' => $appointments
@@ -83,7 +85,9 @@ class AppointmentController extends Controller
             'code' => "A" . random_int(0, 100),
             'decription' => htmlspecialchars($request->description),
             'patient_id' => htmlspecialchars($request->patient_id),
+            'doctor_id' => auth()->user()->id,
             "start" => $startDate->toDateTimeString(),
+            "end" => Carbon::parse($request->start)->addHour(2)->toDateTimeString(),
             "status" => "#ffc107"
         ]);
         return response()->json([
@@ -108,17 +112,17 @@ class AppointmentController extends Controller
         ]);
     }
 
-    public function patientAppointment($patient_id,$status)
+    public function patientAppointment($patient_id, $status)
     {
         // dd($patient_id,$status);
-        $status=$status=="none" ? "":$status ;
-        $appointments = Appointment::whereHas('patient',function($query) use ($patient_id) {
-            return $query->where('id',$patient_id);
+        $status = $status == "none" ? "" : $status;
+        $appointments = Appointment::whereHas('patient', function ($query) use ($patient_id) {
+            return $query->where('id', $patient_id);
         })
-        ->when(!empty($status),function($query) use ($status) {
-            return $query->where('status',"#".$status);
-        })
-        ->get();
+            ->when(!empty($status), function ($query) use ($status) {
+                return $query->where('status', "#" . $status);
+            })
+            ->get();
 
         // dd($appointments);
         return response()->json([
@@ -141,7 +145,8 @@ class AppointmentController extends Controller
         ]);
     }
 
-    public function cancelAppointment($id){
+    public function cancelAppointment($id)
+    {
         $appointment = Appointment::findOrFail($id);
         $appointment->status = "#B0B0B0";
         $appointment->save();

@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use App\Models\Patient;
 use Barryvdh\DomPDF\PDF;
 use Illuminate\Http\Request;
+use App\Models\PatientHasDoctor;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 
@@ -77,24 +78,97 @@ class PatientController extends Controller
 
         $search = $search == "none" ? "" : $search;
 
-        $patients = Patient::when(!empty($search), function ($query) use ($search) {
-            $query->where('id', 'LIKE', '%' . $search . '%')
-                ->orWhere('first_name', 'LIKE', '%' . $search . '%')
-                ->orWhere('last_name', 'LIKE', '%' . $search . '%')
-                ->orWhere('blood_group', 'LIKE', '%' . strtoupper($search) . '%')
-                ->orWhere('adress', 'LIKE', '%' . $search . '%')
-                ->orWhere('gender', 'LIKE', '%' .strtoupper( $search) . '%')
-                ->orWhere('city', 'LIKE', '%' . $search . '%');
-        })
-            ->select("id as patient_id", "email","first_name", "last_name", "phone", "gender", "blood_group", "birth_day", "adress","city")
+        $patients = Patient::doesntHave('affections')
+            ->when(!empty($search), function ($query) use ($search) {
+                $query->where('id', 'LIKE', '%' . $search . '%')
+                    ->orWhere('first_name', 'LIKE', '%' . $search . '%')
+                    ->orWhere('last_name', 'LIKE', '%' . $search . '%')
+                    ->orWhere('blood_group', 'LIKE', '%' . strtoupper($search) . '%')
+                    ->orWhere('adress', 'LIKE', '%' . $search . '%')
+                    ->orWhere('gender', 'LIKE', '%' . strtoupper($search) . '%')
+                    ->orWhere('city', 'LIKE', '%' . $search . '%');
+            })
+            ->orderBy("regDate", "desc")
+            ->select("id as patient_id", "email", "first_name", "last_name", "phone", "gender", "blood_group", "birth_day", "adress", "city")
             ->get();
         return response()->json([
             "patients" => $patients,
-            "count"=>count($patients),
+            "count" => count($patients),
             "message" => $search
         ]);
     }
 
+
+    public function patientStats($search)
+    {
+        $search = $search == "none" ? "" : $search;
+        if ($search != "none") {
+            switch ($search) {
+                case 'today':
+                    $date = Carbon::now();
+                    break;
+                case '3j':
+                    $date = Carbon::now()->subDay(3);
+                    break;
+                case '7j':
+                    $date = Carbon::now()->subDay(8);
+                    break;
+                case '1m':
+                    $date = Carbon::now()->subMonths(1);
+                    break;
+                case '2m':
+                    $date = Carbon::now()->subMonths(2);
+                    break;
+                case '5m':
+                    $date = Carbon::now()->subMonths(5);
+                    break;
+                case '1A':
+                    $date = Carbon::now()->subYear(1);
+                    break;
+                default:
+                    $date = "";
+                    break;
+            }
+        }
+
+        $patientStatMonth = Patient::when(!empty($date), function ($query) use($date) {
+            $query->whereDate("patients.regDate","<=",$date);
+        })
+            ->select(DB::raw('MONTH(patients.regDate) as month'), DB::raw('COUNT(*) as count'))
+            ->groupBy(DB::raw('MONTH(patients.regDate)'))
+            ->get()
+            ->each(function ($item) {
+                $mois = $item->month;
+                $nomMois = \Carbon\Carbon::createFromFormat('!m', $mois)->locale('fr')->monthName;
+                $item->month = $nomMois;
+            });
+        $patientDoctorStat = PatientHasDoctor::join('users', 'patient_has_doctors.doctor_id', '=', 'users.id')
+            ->select(DB::raw('CONCAT(users.user_first_name," ",users.user_last_name) as full_name'), DB::raw('COUNT(*) as count'))
+            ->groupBy(['patient_has_doctors.doctor_id', 'users.user_first_name', 'users.user_last_name'])
+            ->orderBy('count', 'desc')
+            // ->limit(4)
+            ->get();
+        $patientTown = Patient::doesntHave('demande')
+            ->when(!empty($date), function ($query) use($date) {
+                $query->whereDate("patients.regDate","<=",$date);
+        })
+            ->select("city", DB::raw('COUNT(*) as count'))
+            ->groupBy('city')
+            ->get();
+
+        return response()->json([
+            'patientMonth' => $patientStatMonth,
+            'patientDoctorStats' => $patientDoctorStat,
+            'patientTown' => $patientTown,
+            'totalPatient' => Patient::when(!empty($date), function ($query) use($date) {
+                $query->whereDate("patients.regDate","<=",$date);
+            })->count(),
+            'totalAdmis' => Patient::has('affections')->when(!empty($date), function ($query) use($date) {
+                $query->whereDate("patients.regDate","<=",$date);
+            })->count(),
+            "search" => $search 
+        ]);
+    }
 
     /**
      * Update the specified resource in storage.
@@ -103,17 +177,17 @@ class PatientController extends Controller
     {
         //
 
-        $patient=Patient::findOrFail($id);
-        $patient->first_name=htmlspecialchars($request->first_name);
-        $patient->last_name=htmlspecialchars($request->last_name);
-        $patient->birth_day=htmlspecialchars($request->birth_day);
-        $patient->adress=htmlspecialchars($request->adress);
-        $patient->city=htmlspecialchars($request->city);
-        $patient->blood_group=htmlspecialchars($request->blood_group);
+        $patient = Patient::findOrFail($id);
+        $patient->first_name = htmlspecialchars($request->first_name);
+        $patient->last_name = htmlspecialchars($request->last_name);
+        $patient->birth_day = htmlspecialchars($request->birth_day);
+        $patient->adress = htmlspecialchars($request->adress);
+        $patient->city = htmlspecialchars($request->city);
+        $patient->blood_group = htmlspecialchars($request->blood_group);
         $patient->save();
 
         return response()->json([
-            'message' => "Mise a jour du patient : ".$id." reussi...",
+            'message' => "Mise a jour du patient : " . $id . " reussi...",
             'status' => 1,
         ]);
     }
