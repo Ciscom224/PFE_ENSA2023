@@ -19,7 +19,7 @@ class PatientController extends Controller
     public function index()
     {
         //
-        $patients = Patient::all();
+        $patients = Patient::whereNull('deleted_at')->get();
         return response()->json([
             'patients' => $patients,
             'status' => 1
@@ -88,6 +88,7 @@ class PatientController extends Controller
                     ->orWhere('gender', 'LIKE', '%' . strtoupper($search) . '%')
                     ->orWhere('city', 'LIKE', '%' . $search . '%');
             })
+            ->whereNull('deleted_at')
             ->orderBy("regDate", "desc")
             ->select("id as patient_id", "email", "first_name", "last_name", "phone", "gender", "blood_group", "birth_day", "adress", "city")
             ->get();
@@ -166,7 +167,7 @@ class PatientController extends Controller
             'totalAdmis' => Patient::has('affections')->when(!empty($date), function ($query) use($date) {
                 $query->whereDate("patients.regDate","<=",$date);
             })->count(),
-            "search" => $search 
+            "search" => $search
         ]);
     }
 

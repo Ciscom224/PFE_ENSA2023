@@ -19,16 +19,20 @@ class AppointmentController extends Controller
         //
 
         $appointments = Patient::join('appointments', 'appointments.patient_id', '=', 'patients.id')
-            ->join('patient_has_doctors', function ($query) {
-                $query->where('patient_has_doctors.doctor_id', auth()->user()->id);
-            })
+            ->join('patient_has_doctors', 'patients.id', '=', 'patient_has_doctors.patient_id')
+            ->where('patient_has_doctors.doctor_id',auth()->user()->id)
+            ->whereNull('appointments.deleted_at')
             ->select('patients.id as patient_id', 'patients.first_name', 'patients.last_name', 'patients.regDate as enter_d', 'patients.phone as tel', 'appointments.id as id', 'appointments.title', 'appointments.decription as description', 'appointments.start',  'appointments.end', 'appointments.status as color')
             ->distinct("patients.id")
             ->get();
         return response()->json([
-            'appointments' => $appointments
+            'appointments' => $appointments,
+            'id'=>auth()->user()->id
         ]);
     }
+  
+
+    
 
     /**
      * Show the form for creating a new resource.
@@ -53,6 +57,7 @@ class AppointmentController extends Controller
 
         $appointments = Appointment::join('patients', 'appointments.patient_id', '=', 'patients.id')
             ->where('patients.doctor_id', $request->doctor_id)
+            ->whereNull('appointments.deleted_at')
             ->when(!empty($request->searchString), function ($query) use ($request) {
                 $query->where('patients.id', 'LIKE', '%' . $request->searchString . '%')
                     ->orWhere('patients.first_name', 'LIKE', '%' . $request->searchString . '%')
@@ -101,6 +106,7 @@ class AppointmentController extends Controller
     public function edit(Request $request)
     {
         //
+
         $appointment = Appointment::findOrFail($request->id);
         $appointment->title = $request->title;
         $appointment->decription = $request->description;

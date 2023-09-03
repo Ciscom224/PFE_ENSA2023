@@ -128,6 +128,7 @@ class AdminController extends Controller
 
         $doctors = User::where("speciality_id", $id)->get();
         return response()->json([
+            'id'=>$id,
             'doctors' => $doctors
         ]);
     }
@@ -171,6 +172,15 @@ class AdminController extends Controller
             'totalDoctor' => User::where('role', "Doctor")->count(),
             'statAppoints' => $statAppoints,
             'statAppointsDay' => $statAppointsDay,
+        ]);
+    }
+
+    public function usersOnline(){
+        $users=User::where('online',1)->limit(4)->get();
+
+        return response()->json([
+            'status'=>224,
+            'users'=>$users,
         ]);
     }
 }

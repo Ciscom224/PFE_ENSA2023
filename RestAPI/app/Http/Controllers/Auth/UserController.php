@@ -38,6 +38,11 @@ class UserController extends Controller
 
         ]);
     }
+    public function RegisterPatient(Request $request){
+        return response()->json([
+            'msg'=>"connexion reussit!!!!"
+        ]);
+    }
 
     public function Login(Request $request){
         $request->validate([
@@ -80,9 +85,12 @@ class UserController extends Controller
 
     public function Logout(){
         auth()->user()->tokens()->delete();
+        $user=User::findOrFail(auth()->user()->id);
+        $user->online=false;
+        $user->save();
         return response()->json([
-            'status'=>1,
-            'msg'=>"End session",
+            'status'=>224,
+            'message'=>"Vous vous etes deconnectez !!!",
         ]);
     }
 

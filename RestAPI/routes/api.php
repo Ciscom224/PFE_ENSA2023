@@ -18,11 +18,12 @@ Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
 
 Route::post('/login', [UserController::class, 'Login']);
 Route::post('/register', [UserController::class, 'Register']);
+Route::post('/registerPatient', [UserController::class, 'RegisterPatient']);
 
 Route::group(['middleware' => ["auth:sanctum"]], function () {
 
     Route::get('/user-profil', [UserController::class, 'UserProfil']);
-    Route::get('/logout', [UserController::class], 'Logout');
+    Route::get('/logout', [UserController::class, 'Logout']);
 
 
       //====================================================================//
@@ -42,16 +43,19 @@ Route::group(['middleware' => ["auth:sanctum"]], function () {
     Route::post('/doctor_to_speciality', [AdminController::class, 'doctorToSpeciality']);
     Route::get('/doctors_speciality/{id}', [AdminController::class, 'doctorsSpeciality']);
     Route::post('/doctor_to_patient', [AdminController::class, 'doctorToPatient']);
+    Route::get('/usersOnline', [AdminController::class, 'usersOnline']);
 
       //====================================================================//
      //                      DOCTOR ROUTES                                 //
     //====================================================================//
     Route::post('/addDoctor', [DoctorController::class, 'store']);
+    Route::post('/updateDoctor/{id}', [DoctorController::class, 'update']);
     Route::get('/doctors', [DoctorController::class, 'index']);
     Route::get('/doctor/{id}', [DoctorController::class, 'show']);
+    Route::get('/searchDoctor/{search}', [DoctorController::class, 'searchDoctor']);
     Route::get('/doctor_patient/{name}', [DoctorController::class, 'doctor_patient']);
     Route::get('/patient_for_doctor/{id}', [DoctorController::class, 'patients_for_this_doctor']);
-    Route::delete('/doctor/{id}', [DoctorController::class, 'destroy']);
+    Route::delete('/doctor/delete/{id}', [DoctorController::class, 'destroy']);
 
 
       //====================================================================//

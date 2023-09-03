@@ -27,14 +27,6 @@ class DoctorController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-
-    }
 
     /**
      * Store a newly created resource in storage.
@@ -46,21 +38,22 @@ class DoctorController extends Controller
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:' . User::class],
-            'password' => ['required',  Password::min(8)],
         ]);
-
+        
         $user = new User;
-        $user->user_first_name = $request->first_name;
-        $user->user_last_name = strtoupper($request->last_name);
+        $user->user_first_name = htmlspecialchars($request->first_name);
+        $user->user_last_name = htmlspecialchars(strtoupper($request->last_name));
         $user->adress = "default";
         $user->email = $request->email;
         $user->role = "Doctor";
-        $user->password = Hash::make($request->password);
+        $user->speciality_id = $request->speciality;
+        $user->service_id = $request->service;
+        $user->password = Hash::make($request->user_last_name."1234");
         $user->save();
 
         return response()->json([
             'status' => 1,
-            'msg' => "Add Doctor sucess !!!",
+            'message' => "Ajout Docteur reussit !!!",
 
         ]);
     }
@@ -76,6 +69,29 @@ class DoctorController extends Controller
             'doctor' => $doctor
         ]);
     }
+    public function searchDoctor($search){
+
+        $search=$search=="none"? "": $search;
+
+        $doctors=User::where('role',"Doctor")
+        ->when(!empty($search),function ($query) use($search){
+            $query->where('users.email','LIKE','%'.$search.'%')
+            ->orWhere('users.user_first_name','LIKE','%'.$search.'%')
+            ->orWhere('users.user_last_name','LIKE','%'.$search.'%')
+            ->orWhere('users.email','LIKE','%'.$search.'%')
+            ->orWhere('services.name','LIKE','%'.$search.'%')
+            ->orWhere('specialities.name','LIKE','%'.$search.'%');
+        })
+        ->join('services', 'services.id', '=', 'users.service_id')
+        ->join('specialities', 'specialities.id', '=', 'users.speciality_id')
+        ->select('users.id','users.user_first_name as fname','users.user_last_name as lname','users.email','services.name as service','specialities.name as speciality')
+        ->orderBy('lname')
+        ->get();
+
+        return response()->json([
+            'doctors'=>$doctors,
+        ]);
+    }
 
     /**
      * Show the form for editing the specified resource.
@@ -88,9 +104,21 @@ class DoctorController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request,$id)
     {
         //
+        $doctor=User::findOrFail($id);
+        $doctor->user_first_name = htmlspecialchars($request->fname);
+        $doctor->user_last_name = htmlspecialchars(strtoupper($request->lname));
+        $doctor->email = htmlspecialchars($request->email);
+        $doctor->speciality_id = $request->speciality;
+        $doctor->service_id = $request->service;
+        $doctor->save();
+        return response()->json([
+            'status'=>224,
+            'message'=>"Docteur mise a jour reussit !!!",
+        ]);
+
     }
 
 
@@ -143,12 +171,12 @@ class DoctorController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy($id)
     {
         //
-        User::destroy($id);
+        User::findOrFail($id)->delete();
         return response()->json([
-            'message' => "doctor delete success..."
+            'message' => "Docteur supprime !!!"
         ]);
     }
 
